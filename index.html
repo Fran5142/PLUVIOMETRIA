@@ -181,10 +181,6 @@
             transition: opacity 0.3s;
         }
 
-        .caja-foto img[src=""] {
-            opacity: 0;
-        }
-
         .foto-etiqueta {
             position: absolute;
             bottom: 0;
@@ -229,19 +225,20 @@
     <div class="panel-control">
         <div>
             <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ESTACIÓN:</span>
-            <!-- Se mantiene 'data-file-name' para definir el nombre exacto de descarga -->
+            <!-- Se enlazan directamente las rutas locales de las imágenes para que carguen solas en GitHub Pages -->
             <select id="select-estacion" class="select-opcion" onchange="actualizarEstacion()">
-                <option value="PUERTO MONTT" data-omm="85802" data-email="meteopmo@dgtm.cl" data-rrss="@MetArmada_Montt" data-img-key="PUERTO_MONTT" data-file-name="pluvio_pmo">Puerto Montt</option>
-                <option value="IQUIQUE" data-omm="85422" data-email="meteoique@dgtm.cl" data-rrss="@MetArmada_Ique" data-img-key="IQUIQUE" data-file-name="pluvio_ique">Iquique</option>
-                <option value="VALPARAÍSO" data-omm="85558" data-email="meteovalp@dgtm.cl" data-rrss="@MetArmada_Valp" data-img-key="VALPARAISO" data-file-name="pluvio_valpo">Valparaíso</option>
-                <option value="TALCAHUANO" data-omm="85680" data-email="meteotalc@dgtm.cl" data-rrss="@MetArmada_Thno" data-img-key="TALCAHUANO" data-file-name="pluvio_thno">Talcahuano</option>
-                <option value="PUNTA ARENAS" data-omm="85935" data-email="meteomag@dgtm.cl" data-rrss="@MetArmada_Mag" data-img-key="PUNTA_ARENAS" data-file-name="pluvio_par">Punta Arenas</option>
+                <option value="PUERTO MONTT" data-omm="85802" data-email="meteopmo@dgtm.cl" data-rrss="@MetArmada_Montt" data-img-src="PUERTO_MONTT.jpg" data-file-name="pluvio_pmo">Puerto Montt</option>
+                <option value="IQUIQUE" data-omm="85422" data-email="meteoique@dgtm.cl" data-rrss="@MetArmada_Ique" data-img-src="IQUIQUE.JPG" data-file-name="pluvio_ique">Iquique</option>
+                <option value="VALPARAÍSO" data-omm="85558" data-email="meteovalp@dgtm.cl" data-rrss="@MetArmada_Valp" data-img-src="VALPARAISO.jpg" data-file-name="pluvio_valpo">Valparaíso</option>
+                <option value="TALCAHUANO" data-omm="85680" data-email="meteotalc@dgtm.cl" data-rrss="@MetArmada_Thno" data-img-src="TALCAHUANO.JPG" data-file-name="pluvio_thno">Talcahuano</option>
+                <option value="PUNTA ARENAS" data-omm="85935" data-email="meteomag@dgtm.cl" data-rrss="@MetArmada_Mag" data-img-src="PUNTA_ARENAS.jpg" data-file-name="pluvio_par">Punta Arenas</option>
             </select>
         </div>
         <div>
-            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ARCHIVOS (Seleccionar todo):</span>
-            <label for="input-archivos" style="font-weight: bold; color: #fff; cursor: pointer; background: #002A5C; padding: 7px 12px; border-radius: 5px; text-align: center;">📂 Cargar Excel y Fotos</label>
-            <input type="file" id="input-archivos" accept=".xls,.xlsx,.jpg,.jpeg,.png" multiple onchange="procesarArchivos(event)">
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ARCHIVO EXCEL:</span>
+            <!-- Botón exclusivo para cargar el archivo Excel -->
+            <label for="input-excel" style="font-weight: bold; color: #fff; cursor: pointer; background: #002A5C; padding: 7px 12px; border-radius: 5px; text-align: center;">📂 Cargar Excel</label>
+            <input type="file" id="input-excel" accept=".xls,.xlsx" onchange="procesarExcel(event)">
         </div>
         <div>
             <span style="font-size: 11px; font-weight: bold; color: #1a365d;">AÑO:</span>
@@ -275,8 +272,9 @@
                 <h3 id="txt-subtitulo">OMM Nº 85802</h3>
             </div>
             
+            <!-- Logo cargado automáticamente desde el repositorio -->
             <div class="logo-institucional">
-                <img id="img-logo-institucional" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" style="display:none;">
+                <img id="img-logo-institucional" src="LOGO.png" alt="Logo">
             </div>
         </div>
 
@@ -315,8 +313,9 @@
             </div>
 
             <div class="col-visual">
+                <!-- Foto de la estación cargada automáticamente -->
                 <div class="caja-foto">
-                    <img id="img-estacion" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Vista Estación" style="opacity:0;">
+                    <img id="img-estacion" src="PUERTO_MONTT.jpg" alt="Vista Estación">
                     <div class="foto-etiqueta">
                         <span id="txt-foto-ciudad" style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">PUERTO MONTT</span>
                     </div>
@@ -343,7 +342,7 @@
 
     </div>
 
-    <!-- FIRMA DE LA PÁGINA (ESTO NO SE DESCARGARÁ EN EL REPORTE JPG) -->
+    <!-- FIRMA DE LA PÁGINA (FUERA DEL REPORTE JPG) -->
     <div class="firma-web">
         Creado por Cabo 1º (Met.) Francisco Salas Muñoz
     </div>
@@ -354,7 +353,6 @@
 
         let globalWorkbook = null;
         let miGrafico;
-        let imagenesCargadas = {}; 
 
         const mesesAbreviados = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEPT", "OCT", "NOV", "DIC"];
         const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -370,21 +368,15 @@
             const ommNum = opcionSelec.getAttribute('data-omm');
             const email = opcionSelec.getAttribute('data-email');
             const rrss = opcionSelec.getAttribute('data-rrss');
-            const imgKey = opcionSelec.getAttribute('data-img-key'); 
+            const imgSrc = opcionSelec.getAttribute('data-img-src'); // Ruta de la foto local en el repositorio
             
             document.getElementById('txt-titulo-principal').innerText = `INFORME PLUVIOMÉTRICO DE ${ciudad}`;
             document.getElementById('txt-footer-centro').innerText = `CENTRO ZONAL DE METEOROLOGÍA MARINA DE ${ciudad}`;
             document.getElementById('txt-footer-contacto').innerText = `✉️ ${email}   |   𝕏 ${rrss}`;
             document.getElementById('txt-foto-ciudad').innerText = ciudad;
             
-            const imgElement = document.getElementById('img-estacion');
-            if(imagenesCargadas[imgKey]) {
-                imgElement.src = imagenesCargadas[imgKey];
-                imgElement.style.opacity = 1;
-            } else {
-                imgElement.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-                imgElement.style.opacity = 0;
-            }
+            // Asigna la imagen automáticamente según la estación seleccionada
+            document.getElementById('img-estacion').src = imgSrc;
             
             if (window.diasActuales && window.diasActuales.length > 0) {
                 actualizarVistaInforme();
@@ -435,63 +427,34 @@
             });
         }
 
-        function procesarArchivos(e) {
-            const archivos = e.target.files;
-            if(archivos.length === 0) return;
+        // Procesar únicamente el archivo Excel de manera limpia y rápida
+        function procesarExcel(e) {
+            const archivo = e.target.files[0];
+            if(!archivo) return;
 
-            let excelEncontrado = false;
+            const lector = new FileReader();
+            lector.onload = function(ev) {
+                const data = new Uint8Array(ev.target.result);
+                globalWorkbook = XLSX.read(data, { type: 'array' });
 
-            for(let i = 0; i < archivos.length; i++) {
-                let archivo = archivos[i];
-                let nombre = archivo.name.toUpperCase();
+                const anios = globalWorkbook.SheetNames.filter(s => !isNaN(s) && s.length === 4);
+                anios.sort((a, b) => b - a);
 
-                if(nombre.endsWith(".XLS") || nombre.endsWith(".XLSX")) {
-                    excelEncontrado = true;
-                    const lector = new FileReader();
-                    lector.onload = function(ev) {
-                        const data = new Uint8Array(ev.target.result);
-                        globalWorkbook = XLSX.read(data, { type: 'array' });
+                const selectAnio = document.getElementById('select-anio');
+                selectAnio.innerHTML = '';
+                anios.forEach(anio => {
+                    let opt = document.createElement('option');
+                    opt.value = anio; opt.text = anio;
+                    selectAnio.appendChild(opt);
+                });
 
-                        const anios = globalWorkbook.SheetNames.filter(s => !isNaN(s) && s.length === 4);
-                        anios.sort((a, b) => b - a);
-
-                        const selectAnio = document.getElementById('select-anio');
-                        selectAnio.innerHTML = '';
-                        anios.forEach(anio => {
-                            let opt = document.createElement('option');
-                            opt.value = anio; opt.text = anio;
-                            selectAnio.appendChild(opt);
-                        });
-
-                        if (anios.length > 0) {
-                            selectAnio.value = anios.includes("2026") ? "2026" : anios[0];
-                            actualizarMeses();
-                        }
-                    };
-                    lector.readAsArrayBuffer(archivo);
+                if (anios.length > 0) {
+                    selectAnio.value = anios.includes("2026") ? "2026" : anios[0];
+                    actualizarMeses();
                 }
-                else if (nombre.endsWith(".JPG") || nombre.endsWith(".JPEG") || nombre.endsWith(".PNG")) {
-                    let imgURLSegura = URL.createObjectURL(archivo); 
-                    
-                    if (nombre.includes("LOGO")) {
-                        let logoEl = document.getElementById('img-logo-institucional');
-                        logoEl.src = imgURLSegura;
-                        logoEl.style.display = 'block';
-                    } else {
-                        let baseName = nombre.substring(0, nombre.lastIndexOf('.'));
-                        imagenesCargadas[baseName] = imgURLSegura;
-                    }
-                }
-            }
-
-            setTimeout(() => {
-                actualizarEstacion();
-                if(excelEncontrado) {
-                    alert("¡Archivos cargados con éxito! Ahora puedes generar el reporte sin errores.");
-                } else {
-                    alert("Se subieron imágenes, pero parece que faltó seleccionar el archivo Excel.");
-                }
-            }, 500);
+                alert("¡Archivo Excel cargado con éxito!");
+            };
+            lector.readAsArrayBuffer(archivo);
         }
 
         function actualizarMeses() {
@@ -687,11 +650,8 @@
         function descargarImagen() {
             const selectEstacion = document.getElementById('select-estacion');
             const fileNameBase = selectEstacion.options[selectEstacion.selectedIndex].getAttribute('data-file-name');
-            
-            // El nombre exacto sin fecha: pluvio_pmo.jpg
             const nombreArchivoFinal = `${fileNameBase}.jpg`;
 
-            // La cámara solo captura "reporte-imagen", la firma está fuera y no sale.
             const elemento = document.getElementById('reporte-imagen');
             html2canvas(elemento, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
                 const enlace = document.createElement('a');
@@ -699,7 +659,7 @@
                 enlace.href = canvas.toDataURL('image/jpeg', 0.95);
                 enlace.click();
             }).catch(err => {
-                alert("Hubo un problema al exportar. Intenta recargar la página y seleccionar todo de nuevo.");
+                alert("Hubo un problema al exportar. Asegúrate de haber cargado el archivo Excel primero.");
             });
         }
     </script>
