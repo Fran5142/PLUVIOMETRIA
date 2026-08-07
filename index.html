@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Informe Pluviométrico - Armada de Chile</title>
+    <!-- Fuentes limpias y modernas -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Chart.js y DataLabels -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <!-- SheetJS y html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background-color: #e0e5ec;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* =========================================
+           PANEL DE CONTROL (Oculto en la foto)
+           ========================================= */
+        .panel-control {
+            background: #ffffff;
+            padding: 15px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border-top: 4px solid #002A5C;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .panel-control div { display: flex; flex-direction: column; gap: 5px; }
+        .panel-control label-file {
+            font-weight: bold; color: white; cursor: pointer; background: #002A5C;
+            padding: 8px 12px; border-radius: 5px; text-align: center; transition: 0.3s;
+        }
+        .panel-control label-file:hover { background: #004aad; }
+        .panel-control input[type="file"] { display: none; }
+        .select-opcion, .input-dia {
+            padding: 8px 12px; font-size: 13px; font-weight: bold; border-radius: 5px;
+            border: 1px solid #c2c9d6; color: #002A5C; background: #f8fafd; cursor: pointer;
+        }
+        .input-dia { width: 70px; text-align: center; }
+        .btn-descargar {
+            padding: 9px 18px; background-color: #28a745; color: white; border: none;
+            border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); height: 38px; margin-top: auto; transition: 0.3s;
+        }
+        .btn-descargar:hover { background-color: #218838; transform: translateY(-1px); }
+
+        /* =========================================
+           DISEÑO OFICIAL DEL REPORTE (A CAPTURAR)
+           ========================================= */
+        #reporte-imagen {
+            width: 1150px;
+            height: 750px;
+            background-color: #ffffff;
+            position: relative;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Encabezado Institucional */
+        .header-naval {
+            background-color: #002A5C; 
+            color: #ffffff;
+            padding: 25px 45px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 6px solid #D4AF37; 
+            position: relative; 
+        }
+
+        .header-info h1 { margin: 0 0 5px 0; font-size: 34px; font-weight: 900; letter-spacing: 1px; color: #ffffff; text-transform: uppercase; }
+        .header-info h3 { margin: 0; font-size: 18px; color: #D4AF37; font-weight: 700; letter-spacing: 1px;}
+
+        /* Contenedor del nuevo logo flotante */
+        .logo-institucional { 
+            position: absolute; 
+            right: 45px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            height: 120px; 
+            z-index: 10;
+        }
+        
+        .logo-institucional img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* Cuerpo del Informe */
+        .cuerpo-reporte {
+            padding: 30px 45px;
+            display: flex;
+            gap: 30px;
+            flex-grow: 1;
+            background-image: radial-gradient(#e1e5eb 1px, transparent 1px);
+            background-size: 20px 20px; 
+        }
+
+        /* Tarjetas de Datos */
+        .col-datos {
+            width: 42%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            align-content: start;
+        }
+
+        .caja-dato {
+            background: #ffffff;
+            border: 1px solid #e1e5eb;
+            border-left: 5px solid #002A5C;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+
+        .caja-dato.full-width { grid-column: span 2; }
+        .caja-dato.destacado { background: #f0f7ff; border-left-color: #007bff; }
+        .caja-dato.alerta { background: #fdf3f3; border-left-color: #dc3545; }
+
+        .label { font-size: 11px; color: #6c757d; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 5px; }
+        .valor { font-size: 20px; color: #002A5C; font-weight: 900; }
+
+        /* Panel Gráfico y Foto */
+        .col-visual {
+            width: 58%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .caja-grafico {
+            background: #ffffff;
+            border: 1px solid #e1e5eb;
+            border-radius: 8px;
+            padding: 15px 20px;
+            flex-grow: 1;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .titulo-grafico { font-size: 14px; font-weight: 900; color: #002A5C; margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Ventana de Jurisdicción (La Foto) */
+        .caja-foto {
+            height: 140px; 
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            position: relative;
+            background-color: #002A5C;
+            border: 1px solid #002A5C;
+        }
+
+        .caja-foto img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s;
+        }
+
+        .caja-foto img[src=""] {
+            opacity: 0;
+        }
+
+        .foto-etiqueta {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 42, 92, 0.95)); 
+            color: white;
+            padding: 20px 15px 10px 15px;
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            line-height: 1.2;
+        }
+
+        /* Pie de Página */
+        .footer-naval {
+            background: #f4f7f6;
+            padding: 15px 45px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid #e1e5eb;
+        }
+
+        .f-texto { color: #002A5C; font-size: 14px; font-weight: 900; }
+        .f-contacto { color: #6c757d; font-size: 12px; font-weight: bold; margin-top: 2px; }
+        
+        /* Firma externa a la imagen */
+        .firma-web {
+            margin-top: 15px;
+            color: #7b8a9b;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANEL DE CONTROL UNIVERSAL -->
+    <div class="panel-control">
+        <div>
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ESTACIÓN:</span>
+            <!-- Se mantiene 'data-file-name' para definir el nombre exacto de descarga -->
+            <select id="select-estacion" class="select-opcion" onchange="actualizarEstacion()">
+                <option value="PUERTO MONTT" data-omm="85802" data-email="meteopmo@dgtm.cl" data-rrss="@MetArmada_Montt" data-img-key="PUERTO_MONTT" data-file-name="pluvio_pmo">Puerto Montt</option>
+                <option value="IQUIQUE" data-omm="85422" data-email="meteoique@dgtm.cl" data-rrss="@MetArmada_Ique" data-img-key="IQUIQUE" data-file-name="pluvio_ique">Iquique</option>
+                <option value="VALPARAÍSO" data-omm="85558" data-email="meteovalp@dgtm.cl" data-rrss="@MetArmada_Valp" data-img-key="VALPARAISO" data-file-name="pluvio_valpo">Valparaíso</option>
+                <option value="TALCAHUANO" data-omm="85680" data-email="meteotalc@dgtm.cl" data-rrss="@MetArmada_Thno" data-img-key="TALCAHUANO" data-file-name="pluvio_thno">Talcahuano</option>
+                <option value="PUNTA ARENAS" data-omm="85935" data-email="meteomag@dgtm.cl" data-rrss="@MetArmada_Mag" data-img-key="PUNTA_ARENAS" data-file-name="pluvio_par">Punta Arenas</option>
+            </select>
+        </div>
+        <div>
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ARCHIVOS (Seleccionar todo):</span>
+            <label for="input-archivos" style="font-weight: bold; color: #fff; cursor: pointer; background: #002A5C; padding: 7px 12px; border-radius: 5px; text-align: center;">📂 Cargar Excel y Fotos</label>
+            <input type="file" id="input-archivos" accept=".xls,.xlsx,.jpg,.jpeg,.png" multiple onchange="procesarArchivos(event)">
+        </div>
+        <div>
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">AÑO:</span>
+            <select id="select-anio" class="select-opcion" onchange="actualizarMeses()">
+                <option value="">--</option>
+            </select>
+        </div>
+        <div>
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">MES:</span>
+            <select id="select-mes" class="select-opcion" onchange="prepararDias()">
+                <option value="">--</option>
+            </select>
+        </div>
+        <div>
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">DÍA:</span>
+            <input type="number" id="input-dia" class="input-dia" min="1" max="31" value="05" oninput="actualizarVistaInforme()">
+        </div>
+        <div>
+            <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ACCIÓN:</span>
+            <button class="btn-descargar" onclick="descargarImagen()">📸 Exportar Reporte</button>
+        </div>
+    </div>
+
+    <!-- LIENZO PRINCIPAL (LA IMAGEN DEL INFORME) -->
+    <div id="reporte-imagen">
+        
+        <!-- Encabezado Institucional -->
+        <div class="header-naval">
+            <div class="header-info">
+                <h1 id="txt-titulo-principal">INFORME PLUVIOMÉTRICO DE PUERTO MONTT</h1>
+                <h3 id="txt-subtitulo">OMM Nº 85802</h3>
+            </div>
+            
+            <div class="logo-institucional">
+                <img id="img-logo-institucional" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" style="display:none;">
+            </div>
+        </div>
+
+        <!-- Cuerpo del Reporte -->
+        <div class="cuerpo-reporte">
+            
+            <div class="col-datos">
+                <div class="caja-dato full-width destacado">
+                    <span class="label">Agua Caída Últimas 24 Horas</span>
+                    <span class="valor" id="val-24h" style="font-size: 32px; color: #007bff;">0,0 mm</span>
+                </div>
+                <div class="caja-dato full-width">
+                    <span class="label">Último Evento de Precipitación Registrado</span>
+                    <span class="valor" id="val-ultagua" style="font-size: 16px; color: #6c757d;">0,0 mm</span>
+                </div>
+                <div class="caja-dato">
+                    <span class="label">Total a la Fecha</span>
+                    <span class="valor" id="val-total">0,00 mm</span>
+                </div>
+                <div class="caja-dato">
+                    <span class="label">Año Pasado Igual Fecha</span>
+                    <span class="valor" id="val-pasado">0,00 mm</span>
+                </div>
+                <div class="caja-dato">
+                    <span class="label">Promedio a la Fecha</span>
+                    <span class="valor" id="val-promedio">0,00 mm</span>
+                </div>
+                <div class="caja-dato">
+                    <span class="label">Normal 16 Años</span>
+                    <span class="valor">1866,29 mm</span>
+                </div>
+                <div class="caja-dato full-width alerta" id="caja-estado">
+                    <span class="label">Estado Anual: (+) Superávit / (-) Déficit</span>
+                    <span class="valor" id="val-deficit" style="font-size: 24px; color: #dc3545;">0,00 mm (0,00%)</span>
+                </div>
+            </div>
+
+            <div class="col-visual">
+                <div class="caja-foto">
+                    <img id="img-estacion" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Vista Estación" style="opacity:0;">
+                    <div class="foto-etiqueta">
+                        <span id="txt-foto-ciudad" style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">PUERTO MONTT</span>
+                    </div>
+                </div>
+
+                <div class="caja-grafico">
+                    <span class="titulo-grafico">Análisis Comparativo Mensual</span>
+                    <div style="position: relative; height: 100%; width: 100%;">
+                        <canvas id="graficoPluviometrico"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Pie de Página Institucional -->
+        <div class="footer-naval">
+            <div>
+                <div class="f-texto" id="txt-footer-centro">CENTRO ZONAL DE METEOROLOGÍA MARINA DE PUERTO MONTT</div>
+                <div class="f-contacto" id="txt-footer-contacto">✉️ meteopmo@dgtm.cl &nbsp;&nbsp;|&nbsp;&nbsp; 𝕏 @MetArmada_Montt</div>
+            </div>
+            <div style="font-size: 24px; color: #002A5C; opacity: 0.1;"></div>
+        </div>
+
+    </div>
+
+    <!-- FIRMA DE LA PÁGINA (ESTO NO SE DESCARGARÁ EN EL REPORTE JPG) -->
+    <div class="firma-web">
+        Creado por Cabo 1º (Met.) Francisco Salas Muñoz
+    </div>
+
+    <script>
+        Chart.defaults.font.family = "'Roboto', Arial, sans-serif";
+        Chart.register(ChartDataLabels);
+
+        let globalWorkbook = null;
+        let miGrafico;
+        let imagenesCargadas = {}; 
+
+        const mesesAbreviados = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEPT", "OCT", "NOV", "DIC"];
+        const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const diasSemana = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+
+        function pad(numero) { return numero < 10 ? '0' + parseInt(numero) : parseInt(numero); }
+
+        function actualizarEstacion() {
+            const selectEstacion = document.getElementById('select-estacion');
+            const ciudad = selectEstacion.value;
+            const opcionSelec = selectEstacion.options[selectEstacion.selectedIndex];
+            
+            const ommNum = opcionSelec.getAttribute('data-omm');
+            const email = opcionSelec.getAttribute('data-email');
+            const rrss = opcionSelec.getAttribute('data-rrss');
+            const imgKey = opcionSelec.getAttribute('data-img-key'); 
+            
+            document.getElementById('txt-titulo-principal').innerText = `INFORME PLUVIOMÉTRICO DE ${ciudad}`;
+            document.getElementById('txt-footer-centro').innerText = `CENTRO ZONAL DE METEOROLOGÍA MARINA DE ${ciudad}`;
+            document.getElementById('txt-footer-contacto').innerText = `✉️ ${email}   |   𝕏 ${rrss}`;
+            document.getElementById('txt-foto-ciudad').innerText = ciudad;
+            
+            const imgElement = document.getElementById('img-estacion');
+            if(imagenesCargadas[imgKey]) {
+                imgElement.src = imagenesCargadas[imgKey];
+                imgElement.style.opacity = 1;
+            } else {
+                imgElement.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+                imgElement.style.opacity = 0;
+            }
+            
+            if (window.diasActuales && window.diasActuales.length > 0) {
+                actualizarVistaInforme();
+            } else {
+                document.getElementById('txt-subtitulo').innerText = `OMM Nº ${ommNum}`;
+            }
+        }
+
+        function inicializarGrafico(media, acumulado) {
+            const ctx = document.getElementById('graficoPluviometrico').getContext('2d');
+            if (miGrafico) miGrafico.destroy();
+            
+            const gradMedia = ctx.createLinearGradient(0, 0, 0, 400);
+            gradMedia.addColorStop(0, '#004aad'); 
+            gradMedia.addColorStop(1, '#001b3d'); 
+
+            const gradAcum = ctx.createLinearGradient(0, 0, 0, 400);
+            gradAcum.addColorStop(0, '#ff4d4d'); 
+            gradAcum.addColorStop(1, '#a10000'); 
+
+            miGrafico = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: mesesAbreviados,
+                    datasets: [
+                        { label: 'MEDIA MENSUAL', data: media, backgroundColor: gradMedia, borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7 },
+                        { label: 'ACUMULADO', data: acumulado, backgroundColor: gradAcum, borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.7 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 30 } },
+                    plugins: { 
+                        legend: { position: 'top', align: 'end', labels: { font: { size: 12, weight: 'bold' }, color: '#002A5C', usePointStyle: true, pointStyle: 'circle' } },
+                        tooltip: { backgroundColor: 'rgba(0, 42, 92, 0.9)', titleFont: { size: 13, weight: 'bold' }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 8, usePointStyle: true },
+                        datalabels: {
+                            anchor: 'end', align: 'end', offset: 4,
+                            color: function(context) { return context.datasetIndex === 0 ? '#004aad' : '#cc0000'; },
+                            font: { weight: '900', size: 11 },
+                            formatter: function(value) { return value !== 0 ? value.toString().replace('.', ',') : ''; }
+                        }
+                    },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.06)', borderDash: [5, 5], drawBorder: false }, ticks: { font: { size: 11 }, color: '#6c757d', padding: 8 } }, 
+                        x: { grid: { display: false, drawBorder: false }, ticks: { font: { size: 11, weight: 'bold' }, color: '#002A5C', padding: 8 } } 
+                    }
+                }
+            });
+        }
+
+        function procesarArchivos(e) {
+            const archivos = e.target.files;
+            if(archivos.length === 0) return;
+
+            let excelEncontrado = false;
+
+            for(let i = 0; i < archivos.length; i++) {
+                let archivo = archivos[i];
+                let nombre = archivo.name.toUpperCase();
+
+                if(nombre.endsWith(".XLS") || nombre.endsWith(".XLSX")) {
+                    excelEncontrado = true;
+                    const lector = new FileReader();
+                    lector.onload = function(ev) {
+                        const data = new Uint8Array(ev.target.result);
+                        globalWorkbook = XLSX.read(data, { type: 'array' });
+
+                        const anios = globalWorkbook.SheetNames.filter(s => !isNaN(s) && s.length === 4);
+                        anios.sort((a, b) => b - a);
+
+                        const selectAnio = document.getElementById('select-anio');
+                        selectAnio.innerHTML = '';
+                        anios.forEach(anio => {
+                            let opt = document.createElement('option');
+                            opt.value = anio; opt.text = anio;
+                            selectAnio.appendChild(opt);
+                        });
+
+                        if (anios.length > 0) {
+                            selectAnio.value = anios.includes("2026") ? "2026" : anios[0];
+                            actualizarMeses();
+                        }
+                    };
+                    lector.readAsArrayBuffer(archivo);
+                }
+                else if (nombre.endsWith(".JPG") || nombre.endsWith(".JPEG") || nombre.endsWith(".PNG")) {
+                    let imgURLSegura = URL.createObjectURL(archivo); 
+                    
+                    if (nombre.includes("LOGO")) {
+                        let logoEl = document.getElementById('img-logo-institucional');
+                        logoEl.src = imgURLSegura;
+                        logoEl.style.display = 'block';
+                    } else {
+                        let baseName = nombre.substring(0, nombre.lastIndexOf('.'));
+                        imagenesCargadas[baseName] = imgURLSegura;
+                    }
+                }
+            }
+
+            setTimeout(() => {
+                actualizarEstacion();
+                if(excelEncontrado) {
+                    alert("¡Archivos cargados con éxito! Ahora puedes generar el reporte sin errores.");
+                } else {
+                    alert("Se subieron imágenes, pero parece que faltó seleccionar el archivo Excel.");
+                }
+            }, 500);
+        }
+
+        function actualizarMeses() {
+            const anioSel = document.getElementById('select-anio').value;
+            const hojaAnio = globalWorkbook.Sheets[anioSel];
+            if (!hojaAnio) return;
+
+            const filas = XLSX.utils.sheet_to_json(hojaAnio, { header: 1 });
+            let mesesDisponibles = [];
+
+            filas.forEach(fila => {
+                let texto = String(fila[0] || "");
+                if (texto.includes("Mes")) {
+                    mesesNombres.forEach(m => {
+                        if (texto.toLowerCase().includes(m.toLowerCase()) && !mesesDisponibles.includes(m)) {
+                            mesesDisponibles.push(m);
+                        }
+                    });
+                }
+            });
+
+            const selectMes = document.getElementById('select-mes');
+            selectMes.innerHTML = '';
+            mesesDisponibles.forEach(mes => {
+                let opt = document.createElement('option');
+                opt.value = mes; opt.text = mes;
+                selectMes.appendChild(opt);
+            });
+
+            if (mesesDisponibles.length > 0) {
+                selectMes.value = mesesDisponibles[0];
+                prepararDias();
+            }
+        }
+
+        function prepararDias() {
+            const anioSel = document.getElementById('select-anio').value;
+            const mesSel = document.getElementById('select-mes').value;
+            const hojaAnio = globalWorkbook.Sheets[anioSel];
+            if (!hojaAnio) return;
+
+            const filas = XLSX.utils.sheet_to_json(hojaAnio, { header: 1 });
+            let diasDelMes = [];
+            let inMesTarget = false;
+
+            for (let i = 0; i < filas.length; i++) {
+                let fila = filas[i];
+                let texto = String(fila[0] || "");
+
+                if (texto.includes("Mes") && texto.toLowerCase().includes(mesSel.toLowerCase())) {
+                    inMesTarget = true; continue;
+                }
+                if (inMesTarget && typeof fila[0] === 'number' && fila[0] >= 1 && fila[0] <= 31) {
+                    diasDelMes.push(fila);
+                }
+                if (inMesTarget && texto.includes("Mes") && !texto.toLowerCase().includes(mesSel.toLowerCase())) { break; }
+            }
+
+            window.diasActuales = diasDelMes;
+
+            let inputDia = document.getElementById('input-dia');
+            if(!inputDia.value || inputDia.value < 1) { inputDia.value = "01"; } 
+            else { inputDia.value = pad(inputDia.value); }
+            actualizarVistaInforme();
+        }
+
+        function actualizarVistaInforme() {
+            const anioSel = document.getElementById('select-anio').value;
+            const mesSel = document.getElementById('select-mes').value;
+            const rawDia = document.getElementById('input-dia').value;
+            const diaSel = parseInt(rawDia);
+
+            const selectEstacion = document.getElementById('select-estacion');
+            const ommNum = selectEstacion.options[selectEstacion.selectedIndex].getAttribute('data-omm');
+
+            if (isNaN(diaSel) || diaSel < 1 || diaSel > 31 || !window.diasActuales) return;
+            const filaDeseada = window.diasActuales.find(f => f[0] === diaSel);
+            if (!filaDeseada) return;
+
+            if (rawDia.length === 1 && rawDia !== "0") { document.getElementById('input-dia').value = pad(diaSel); }
+
+            let aguaCaida = Number(filaDeseada[1]) || 0;
+            let totalFecha = Number(filaDeseada[2]) || 0;
+            let anoPasado = Number(filaDeseada[3]) || 0;
+            let anoNormal = Number(filaDeseada[4]) || 0;
+            let deficitVal = Number(filaDeseada[5]) || 0;
+            let porcVal = Number(filaDeseada[6]) || 0;
+
+            let mesIndex = mesesNombres.findIndex(m => m.toLowerCase() === mesSel.toLowerCase());
+            let fechaSeleccionada = new Date(anioSel, mesIndex, diaSel);
+            fechaSeleccionada.setDate(fechaSeleccionada.getDate() + 1); 
+            
+            let diaSig = pad(fechaSeleccionada.getDate());
+            let mesSig = mesesNombres[fechaSeleccionada.getMonth()].toUpperCase();
+            let anioSig = fechaSeleccionada.getFullYear();
+            let nombreDiaStr = diasSemana[fechaSeleccionada.getDay()];
+
+            document.getElementById('txt-subtitulo').innerText = `OMM Nº ${ommNum}  |  ${nombreDiaStr} ${diaSig} DE ${mesSig} ${anioSig}`;
+
+            document.getElementById('val-24h').innerText = aguaCaida.toFixed(1).replace(".", ",") + " mm";
+            document.getElementById('val-total').innerText = totalFecha.toFixed(2).replace(".", ",") + " mm";
+            document.getElementById('val-pasado').innerText = anoPasado.toFixed(2).replace(".", ",") + " mm";
+            document.getElementById('val-promedio').innerText = anoNormal.toFixed(2).replace(".", ",") + " mm";
+            
+            let signoDef = deficitVal < 0 ? "(-)" : "(+)";
+            let textoDeficit = `${signoDef} ${Math.abs(deficitVal).toFixed(2).replace(".", ",")} mm  [${signoDef} ${Math.abs(porcVal).toFixed(2).replace(".", ",")}%]`;
+            const elemDef = document.getElementById('val-deficit');
+            const cajaEstado = document.getElementById('caja-estado');
+            elemDef.innerText = textoDeficit;
+            
+            if(deficitVal < 0) {
+                elemDef.style.color = "#dc3545"; 
+                cajaEstado.style.borderLeftColor = "#dc3545";
+                cajaEstado.style.backgroundColor = "#fdf3f3";
+            } else {
+                elemDef.style.color = "#28a745"; 
+                cajaEstado.style.borderLeftColor = "#28a745";
+                cajaEstado.style.backgroundColor = "#f2fcf5";
+            }
+
+            let acumuladoMensual = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+            let mediaMensual = [76.29, 78.48, 111.28, 175.28, 227.68, 235.59, 231.46, 232.39, 157.86, 121.11, 112.79, 106.38];
+            
+            let ultimaLluviaVal = 0;
+            let ultimaLluviaDia = 0;
+            let ultimaLluviaMes = "";
+            let superoFechaSeleccionada = false;
+
+            if (globalWorkbook) {
+                const hojaAnio = globalWorkbook.Sheets[anioSel];
+                const filasAnio = XLSX.utils.sheet_to_json(hojaAnio, { header: 1 });
+                let indiceMesActual = -1;
+                let nombreMesActual = "";
+
+                filasAnio.forEach(fila => {
+                    let col0 = String(fila[0] || "");
+                    if (col0.includes("Mes")) {
+                        mesesNombres.forEach((m, idx) => { 
+                            if (col0.toLowerCase().includes(m.toLowerCase())) {
+                                indiceMesActual = idx;
+                                nombreMesActual = m;
+                            } 
+                        });
+                    }
+                    if (indiceMesActual !== -1 && typeof fila[0] === 'number' && fila[0] >= 1 && fila[0] <= 31) {
+                        let lluviaDelDia = Number(fila[1]) || 0;
+                        let diaIteracion = fila[0];
+                        
+                        acumuladoMensual[indiceMesActual] += lluviaDelDia;
+                        
+                        if (!superoFechaSeleccionada) {
+                            if (lluviaDelDia > 0) {
+                                ultimaLluviaVal = lluviaDelDia;
+                                ultimaLluviaDia = diaIteracion;
+                                ultimaLluviaMes = nombreMesActual;
+                            }
+                            if (nombreMesActual.toLowerCase() === mesSel.toLowerCase() && diaIteracion === diaSel) {
+                                superoFechaSeleccionada = true;
+                            }
+                        }
+                    }
+                });
+
+                for(let i=0; i<12; i++) acumuladoMensual[i] = Math.round(acumuladoMensual[i] * 10) / 10;
+
+                const hojaIndice = globalWorkbook.Sheets['INDICE MENSUAL'];
+                if (hojaIndice) {
+                    const filasIndice = XLSX.utils.sheet_to_json(hojaIndice, { header: 1 });
+                    filasIndice.forEach(fila => {
+                        let idx = mesesAbreviados.indexOf(String(fila[1] || "").trim().toUpperCase());
+                        if (idx !== -1 && !isNaN(Number(fila[2]))) mediaMensual[idx] = Number(fila[2]); 
+                    });
+                }
+            }
+
+            if (ultimaLluviaVal > 0) {
+                document.getElementById('val-ultagua').innerText = `${ultimaLluviaVal.toFixed(1).replace(".", ",")} mm (${pad(ultimaLluviaDia)} de ${ultimaLluviaMes} ${anioSel})`;
+            } else {
+                document.getElementById('val-ultagua').innerText = `0,0 mm (Sin registros previos)`;
+            }
+
+            inicializarGrafico(mediaMensual, acumuladoMensual);
+        }
+
+        window.onload = function() {
+            actualizarEstacion();
+            inicializarGrafico(
+                [76.29, 78.48, 111.28, 175.28, 227.68, 235.59, 231.46, 232.39, 157.86, 121.11, 112.79, 106.38],
+                [34.8, 97.0, 268.6, 146.7, 88.0, 162.7, 258.1, 36.7, 0, 0, 0, 0]
+            );
+        };
+
+        function descargarImagen() {
+            const selectEstacion = document.getElementById('select-estacion');
+            const fileNameBase = selectEstacion.options[selectEstacion.selectedIndex].getAttribute('data-file-name');
+            
+            // El nombre exacto sin fecha: pluvio_pmo.jpg
+            const nombreArchivoFinal = `${fileNameBase}.jpg`;
+
+            // La cámara solo captura "reporte-imagen", la firma está fuera y no sale.
+            const elemento = document.getElementById('reporte-imagen');
+            html2canvas(elemento, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                const enlace = document.createElement('a');
+                enlace.download = nombreArchivoFinal;
+                enlace.href = canvas.toDataURL('image/jpeg', 0.95);
+                enlace.click();
+            }).catch(err => {
+                alert("Hubo un problema al exportar. Intenta recargar la página y seleccionar todo de nuevo.");
+            });
+        }
+    </script>
+</body>
+</html>
