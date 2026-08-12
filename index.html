@@ -221,12 +221,13 @@
     <div class="panel-control">
         <div>
             <span style="font-size: 11px; font-weight: bold; color: #1a365d;">ESTACIÓN:</span>
+            <!-- Se actualizaron los data-file-name con los nombres exactos de los 5 archivos -->
             <select id="select-estacion" class="select-opcion" onchange="actualizarEstacion()">
-                <option value="IQUIQUE" data-omm="85422" data-email="meteoique@dgtm.cl" data-rrss="@MetArmada_Ique" data-img-src="IQUIQUE.JPG" data-file-name="pluvio_ique">Iquique</option>
-                <option value="VALPARAÍSO" data-omm="85558" data-email="meteovalp@dgtm.cl" data-rrss="@MetArmada_Valp" data-img-src="VALPARAISO.JPG" data-file-name="pluvio_valpo">Valparaíso</option>
-                <option value="TALCAHUANO" data-omm="85680" data-email="meteotalc@dgtm.cl" data-rrss="@MetArmada_Thno" data-img-src="TALCAHUANO.JPG" data-file-name="pluvio_thno">Talcahuano</option>
-                <option value="PUERTO MONTT" data-omm="85802" data-email="meteopmo@dgtm.cl" data-rrss="@MetArmada_Montt" data-img-src="PUERTO_MONTT.jpg" data-file-name="pluvio_pmo">Puerto Montt</option>
-                <option value="PUNTA ARENAS" data-omm="85935" data-email="meteomag@dgtm.cl" data-rrss="@MetArmada_Mag" data-img-src="PUNTA_ARENAS.JPG" data-file-name="pluvio_par">Punta Arenas</option>
+                <option value="IQUIQUE" data-omm="85422" data-email="meteoique@dgtm.cl" data-rrss="@MetArmada_Ique" data-img-src="IQUIQUE.JPG" data-file-name="Pluviometria_Ique">Iquique</option>
+                <option value="VALPARAÍSO" data-omm="85558" data-email="meteovalp@dgtm.cl" data-rrss="@MetArmada_Valp" data-img-src="VALPARAISO.jpg" data-file-name="Pluviometria_Valp">Valparaíso</option>
+                <option value="TALCAHUANO" data-omm="85680" data-email="meteotalc@dgtm.cl" data-rrss="@MetArmada_Thno" data-img-src="TALCAHUANO.JPG" data-file-name="Pluviometria_Talc">Talcahuano</option>
+                <option value="PUERTO MONTT" data-omm="85802" data-email="meteopmo@dgtm.cl" data-rrss="@MetArmada_Montt" data-img-src="PUERTO_MONTT.jpg" data-file-name="Pluviometria_Pmo">Puerto Montt</option>
+                <option value="PUNTA ARENAS" data-omm="85935" data-email="meteomag@dgtm.cl" data-rrss="@MetArmada_Mag" data-img-src="PUNTA_ARENAS.jpg" data-file-name="Pluviometria_Mag">Punta Arenas</option>
             </select>
         </div>
         <div>
@@ -397,20 +398,30 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 30 } },
+                    layout: { padding: { top: 40 } },
                     plugins: { 
                         legend: { position: 'top', align: 'end', labels: { font: { size: 12, weight: 'bold' }, color: '#002A5C', usePointStyle: true, pointStyle: 'circle' } },
                         tooltip: { backgroundColor: 'rgba(0, 42, 92, 0.9)', titleFont: { size: 13, weight: 'bold' }, bodyFont: { size: 12 }, padding: 10, cornerRadius: 8, usePointStyle: true },
                         datalabels: {
-                            anchor: 'end', align: 'end', offset: 4,
+                            anchor: 'end', 
+                            align: 'top', 
+                            offset: 4,    
                             color: function(context) { return context.datasetIndex === 0 ? '#004aad' : '#cc0000'; },
                             font: { weight: '900', size: 11 },
-                            formatter: function(value) { return value !== 0 ? value.toString().replace('.', ',') : ''; }
+                            formatter: function(value) { return value !== 0 ? value.toString().replace('.', ',') : ''; },
+                            display: function(context) { return context.dataset.data[context.dataIndex] !== 0; }
                         }
                     },
                     scales: { 
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.06)', borderDash: [5, 5], drawBorder: false }, ticks: { font: { size: 11 }, color: '#6c757d', padding: 8 } }, 
-                        x: { grid: { display: false, drawBorder: false }, ticks: { font: { size: 11, weight: 'bold' }, color: '#002A5C', padding: 8 } } 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: 'rgba(0, 0, 0, 0.06)', borderDash: [5, 5], drawBorder: false }, 
+                            ticks: { font: { size: 11 }, color: '#6c757d', padding: 8 } 
+                        }, 
+                        x: { 
+                            grid: { display: false, drawBorder: false }, 
+                            ticks: { font: { size: 11, weight: 'bold' }, color: '#002A5C', padding: 8 } 
+                        } 
                     }
                 }
             });
@@ -440,7 +451,7 @@
                     selectAnio.value = anios.includes("2026") ? "2026" : anios[0];
                     actualizarMeses();
                 }
-                alert("¡Archivo Excel de la estación cargado con éxito!");
+                alert("¡Archivo Excel cargado con éxito!");
             };
             lector.readAsArrayBuffer(archivo);
         }
@@ -571,7 +582,6 @@
             let ultimaLluviaMes = "";
             let superoFechaSeleccionada = false;
             
-            // VARIABLES DINÁMICAS PARA LECTURA DEL AÑO PROMEDIO
             let labelNormalExcel = "AÑO PROMEDIO";
             let valorNormalExcel = "";
 
@@ -584,14 +594,12 @@
                 filasAnio.forEach((fila, i, arr) => {
                     let col0 = String(fila[0] || "");
                     
-                    // ESCÁNER INTELIGENTE DE ENCABEZADOS DEL MES ACTUAL
                     if (col0.toLowerCase().includes("mes")) {
                         mesesNombres.forEach((m, idx) => { 
                             if (col0.toLowerCase().includes(m.toLowerCase())) {
                                 indiceMesActual = idx;
                                 nombreMesActual = m;
                                 
-                                // Si es el mes que seleccionamos en pantalla, leemos sus etiquetas y valores
                                 if (m.toLowerCase() === mesSel.toLowerCase()) {
                                     for(let j = 0; j <= 4; j++) {
                                         if (arr[i+j]) {
@@ -599,13 +607,11 @@
                                                 if (celda) {
                                                     let text = String(celda).trim();
                                                     
-                                                    // Buscamos si dice explícitamente "Promedio X años" o "Normal X años"
                                                     let mLabel = text.match(/(promedio\s+\d+\s+años|normal\s+\d+\s+años)/i);
                                                     if (mLabel) {
                                                         labelNormalExcel = mLabel[1].toUpperCase();
                                                     }
                                                     
-                                                    // Buscamos si dice explícitamente el número del "Año Normal/Promedio : 948,02"
                                                     let mVal = text.match(/(?:año normal|año promedio)\s*:\s*([\d,\.]+)/i);
                                                     if (mVal) {
                                                         valorNormalExcel = mVal[1] + " mm";
@@ -656,10 +662,8 @@
                 document.getElementById('val-ultagua').innerText = `0,0 mm (Sin registros previos)`;
             }
 
-            // ACTUALIZACIÓN DE LA CAJA DINÁMICA
             document.getElementById('lbl-normal-anual').innerText = labelNormalExcel;
             
-            // Si el escáner encontró el número en el Excel, lo usa. Si no, lo calcula sumando los meses.
             if (valorNormalExcel !== "") {
                 document.getElementById('val-normal-anual').innerText = valorNormalExcel;
             } else {
