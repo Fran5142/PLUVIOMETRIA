@@ -290,7 +290,7 @@
                     <span class="valor" id="val-pasado">0,00 mm</span>
                 </div>
                 <div class="caja-dato">
-                    <span class="label">Promedio a la Fecha</span>
+                    <span class="label">Año normal a la Fecha</span>
                     <span class="valor" id="val-promedio">0,00 mm</span>
                 </div>
                 <!-- CAJA DINÁMICA DEL AÑO PROMEDIO / NORMAL -->
@@ -441,6 +441,9 @@
         function procesarExcel(e) {
             const archivo = e.target.files[0];
             if(!archivo) return;
+            
+            // GUARDAMOS EL NOMBRE DEL ARCHIVO PARA VALIDARLO LUEGO
+            window.nombreArchivoExcel = archivo.name; 
 
             const lector = new FileReader();
             lector.onload = function(ev) {
@@ -618,7 +621,8 @@
                                                 if (celda) {
                                                     let text = String(celda).trim();
                                                     
-                                                    let mLabel = text.match(/(promedio\s+\d+\s+años|normal\s+\d+\s+años)/i);
+                                                    // MODIFICACION REGEX AMPLIADO
+                                                    let mLabel = text.match(/(AÑO\s+(?:NORMAL|PROMEDIO)\s*\(\d{4}\s*-\s*\d{4}\)|AÑO\s+(?:NORMAL|PROMEDIO)|promedio\s+\d+\s+años|normal\s+\d+\s+años)/i);
                                                     if (mLabel) {
                                                         labelNormalExcel = mLabel[1].toUpperCase();
                                                     }
@@ -671,6 +675,19 @@
                 document.getElementById('val-ultagua').innerText = `${ultimaLluviaVal.toFixed(1).replace(".", ",")} mm (${pad(ultimaLluviaDia)} de ${ultimaLluviaMes} ${anioSel})`;
             } else {
                 document.getElementById('val-ultagua').innerText = `0,0 mm (Sin registros previos)`;
+            }
+
+            // MODIFICACION: EXCEPCIONES PARA LOS NOMBRES DE ARCHIVO EXCEL
+            if (window.nombreArchivoExcel) {
+                let nombreArchivo = window.nombreArchivoExcel.toLowerCase();
+                
+                if (nombreArchivo.includes("pluviometria_pmo")) {
+                    labelNormalExcel = "PROMEDIO 16 AÑOS (2005-2020)";
+                } else if (nombreArchivo.includes("pluviometria_talc")) {
+                    labelNormalExcel = "PROMEDIO 10 AÑOS";
+                } else if (nombreArchivo.includes("pluviometria_valp") || nombreArchivo.includes("pluviometria_mag")) {
+                    labelNormalExcel = "PROMEDIO 30 AÑOS (1991-2020)";
+                }
             }
 
             document.getElementById('lbl-normal-anual').innerText = labelNormalExcel;
