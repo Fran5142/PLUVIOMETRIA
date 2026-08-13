@@ -696,11 +696,11 @@
             let nombreArchivo = window.nombreArchivoExcel ? window.nombreArchivoExcel.toLowerCase() : "";
 
             if (estacionActual === "PUERTO MONTT" || nombreArchivo.includes("pmo")) {
-                labelNormalExcel = "PROMEDIO 15 AÑOS (2005-2020)";
+                labelNormalExcel = "AÑO NORMAL (2005-2020)";
             } else if (estacionActual === "TALCAHUANO" || nombreArchivo.includes("talc") || nombreArchivo.includes("thno")) {
-                labelNormalExcel = "PROMEDIO 10 AÑOS (2011-2021)";
+                labelNormalExcel = "AÑO NORMAL (2011-2021)";
             } else if (estacionActual === "VALPARAÍSO" || estacionActual === "PUNTA ARENAS" || nombreArchivo.includes("valp") || nombreArchivo.includes("mag") || nombreArchivo.includes("par")) {
-                labelNormalExcel = "PROMEDIO 30 AÑOS (1991-2020)";
+                labelNormalExcel = "AÑO NORMAL (1991-2020)";
             }
 
             document.getElementById('lbl-normal-anual').innerText = labelNormalExcel;
