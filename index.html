@@ -334,6 +334,7 @@
 
     <!-- FIRMA DE LA PÁGINA WEB -->
     <div class="firma-web">
+        <!-- CABO 1º (MET.) FRANCISCO SALAS MUÑOZ -->
         Creado por Cabo 1º (Met.) Francisco Salas Muñoz
     </div>
 
@@ -442,7 +443,6 @@
             const archivo = e.target.files[0];
             if(!archivo) return;
             
-            // GUARDAMOS EL NOMBRE DEL ARCHIVO PARA VALIDARLO LUEGO
             window.nombreArchivoExcel = archivo.name; 
 
             const lector = new FileReader();
@@ -462,7 +462,6 @@
                 });
 
                 if (anios.length > 0) {
-                    // MODIFICACIÓN: Extraer el año dinámicamente desde el nombre del archivo
                     let anioDetectado = null;
                     const matchesAnio = archivo.name.match(/\d{4}/g); 
                     
@@ -475,7 +474,6 @@
                         }
                     }
                     
-                    // Selecciona el año encontrado en el nombre; de lo contrario, el primero disponible.
                     selectAnio.value = anioDetectado ? anioDetectado : anios[0];
                     actualizarMeses();
                 }
@@ -556,7 +554,7 @@
 
             const selectEstacion = document.getElementById('select-estacion');
             const ommNum = selectEstacion.options[selectEstacion.selectedIndex].getAttribute('data-omm');
-            const estacionActual = selectEstacion.value.toUpperCase(); // Obtener la estación actual
+            const estacionActual = selectEstacion.value.toUpperCase(); 
 
             if (isNaN(diaSel) || diaSel < 1 || diaSel > 31 || !window.diasActuales) return;
             const filaDeseada = window.diasActuales.find(f => f[0] === diaSel);
@@ -653,6 +651,25 @@
                             } 
                         });
                     }
+
+                    // ====== MODIFICACIÓN: EXTRACCIÓN DINÁMICA DE LA MEDIA MENSUAL ======
+                    // Extraemos el "Indice Mensual" directamente desde las filas de la hoja actual
+                    if (indiceMesActual !== -1) {
+                        fila.forEach(celda => {
+                            if (celda) {
+                                let text = String(celda).trim();
+                                let mIndice = text.match(/indice\s+mensual\s*:\s*([\d,\.]+)/i);
+                                if (mIndice) {
+                                    let valStr = mIndice[1].replace(',', '.');
+                                    let valNum = parseFloat(valStr);
+                                    if (!isNaN(valNum)) {
+                                        mediaMensual[indiceMesActual] = valNum;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    // ====================================================================
                     
                     if (indiceMesActual !== -1 && typeof fila[0] === 'number' && fila[0] >= 1 && fila[0] <= 31) {
                         let lluviaDelDia = Number(fila[1]) || 0;
@@ -691,8 +708,6 @@
                 document.getElementById('val-ultagua').innerText = `0,0 mm (Sin registros previos)`;
             }
 
-            // MODIFICACIÓN ROBUSTA: Asignar el texto del promedio según la estación seleccionada
-            // o el nombre del archivo si es que lo mantuvieras con sufijos.
             let nombreArchivo = window.nombreArchivoExcel ? window.nombreArchivoExcel.toLowerCase() : "";
 
             if (estacionActual === "PUERTO MONTT" || nombreArchivo.includes("pmo")) {
