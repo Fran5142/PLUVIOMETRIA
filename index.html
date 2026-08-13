@@ -415,7 +415,7 @@
                             anchor: 'end', 
                             align: 'end', 
                             offset: 6,      
-                            rotation: -65, // TEXTO 100% VERTICAL PARA EVITAR CRUCES
+                            rotation: -65, 
                             color: function(context) { return context.datasetIndex === 0 ? '#004aad' : '#cc0000'; },
                             font: { weight: '900', size: 10 }, 
                             formatter: function(value) { return value !== 0 ? value.toString().replace('.', ',') : ''; },
@@ -425,7 +425,7 @@
                     scales: { 
                         y: { 
                             beginAtZero: true, 
-                            grace: '30%', // MAYOR MARGEN SUPERIOR AUTOMÁTICO PARA LOS NÚMEROS
+                            grace: '30%', 
                             grid: { color: 'rgba(0, 0, 0, 0.06)', borderDash: [5, 5], drawBorder: false }, 
                             ticks: { font: { size: 11 }, color: '#6c757d', padding: 8 } 
                         }, 
@@ -462,7 +462,21 @@
                 });
 
                 if (anios.length > 0) {
-                    selectAnio.value = anios.includes("2026") ? "2026" : anios[0];
+                    // MODIFICACIÓN: Extraer el año dinámicamente desde el nombre del archivo
+                    let anioDetectado = null;
+                    const matchesAnio = archivo.name.match(/\d{4}/g); 
+                    
+                    if (matchesAnio) {
+                        for (let anio of matchesAnio) {
+                            if (anios.includes(anio)) {
+                                anioDetectado = anio;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Selecciona el año encontrado en el nombre; de lo contrario, el primero disponible.
+                    selectAnio.value = anioDetectado ? anioDetectado : anios[0];
                     actualizarMeses();
                 }
                 alert("¡Archivo Excel cargado con éxito!");
@@ -542,6 +556,7 @@
 
             const selectEstacion = document.getElementById('select-estacion');
             const ommNum = selectEstacion.options[selectEstacion.selectedIndex].getAttribute('data-omm');
+            const estacionActual = selectEstacion.value.toUpperCase(); // Obtener la estación actual
 
             if (isNaN(diaSel) || diaSel < 1 || diaSel > 31 || !window.diasActuales) return;
             const filaDeseada = window.diasActuales.find(f => f[0] === diaSel);
@@ -621,7 +636,6 @@
                                                 if (celda) {
                                                     let text = String(celda).trim();
                                                     
-                                                    // MODIFICACION REGEX AMPLIADO
                                                     let mLabel = text.match(/(AÑO\s+(?:NORMAL|PROMEDIO)\s*\(\d{4}\s*-\s*\d{4}\)|AÑO\s+(?:NORMAL|PROMEDIO)|promedio\s+\d+\s+años|normal\s+\d+\s+años)/i);
                                                     if (mLabel) {
                                                         labelNormalExcel = mLabel[1].toUpperCase();
@@ -677,17 +691,16 @@
                 document.getElementById('val-ultagua').innerText = `0,0 mm (Sin registros previos)`;
             }
 
-            // MODIFICACION: EXCEPCIONES PARA LOS NOMBRES DE ARCHIVO EXCEL
-            if (window.nombreArchivoExcel) {
-                let nombreArchivo = window.nombreArchivoExcel.toLowerCase();
-                
-                if (nombreArchivo.includes("pluviometria_pmo")) {
-                    labelNormalExcel = "PROMEDIO 15 AÑOS (2005-2020)";
-                } else if (nombreArchivo.includes("pluviometria_talc")) {
-                    labelNormalExcel = "PROMEDIO 10 AÑOS (2011-1021)";
-                } else if (nombreArchivo.includes("pluviometria_valp") || nombreArchivo.includes("pluviometria_mag")) {
-                    labelNormalExcel = "PROMEDIO 30 AÑOS (1991-2020)";
-                }
+            // MODIFICACIÓN ROBUSTA: Asignar el texto del promedio según la estación seleccionada
+            // o el nombre del archivo si es que lo mantuvieras con sufijos.
+            let nombreArchivo = window.nombreArchivoExcel ? window.nombreArchivoExcel.toLowerCase() : "";
+
+            if (estacionActual === "PUERTO MONTT" || nombreArchivo.includes("pmo")) {
+                labelNormalExcel = "PROMEDIO 15 AÑOS (2005-2020)";
+            } else if (estacionActual === "TALCAHUANO" || nombreArchivo.includes("talc") || nombreArchivo.includes("thno")) {
+                labelNormalExcel = "PROMEDIO 10 AÑOS (2011-2021)";
+            } else if (estacionActual === "VALPARAÍSO" || estacionActual === "PUNTA ARENAS" || nombreArchivo.includes("valp") || nombreArchivo.includes("mag") || nombreArchivo.includes("par")) {
+                labelNormalExcel = "PROMEDIO 30 AÑOS (1991-2020)";
             }
 
             document.getElementById('lbl-normal-anual').innerText = labelNormalExcel;
