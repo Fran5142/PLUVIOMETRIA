@@ -66,8 +66,9 @@
            DISEÑO OFICIAL DEL REPORTE
            ========================================= */
         #reporte-imagen {
-            width: 1150px;
-            height: 750px;
+            /* TAMAÑO AUMENTADO PARA DAR MÁS ESPACIO */
+            width: 1250px;
+            height: 850px;
             background-color: #ffffff;
             position: relative;
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
@@ -115,10 +116,10 @@
         }
 
         .col-datos {
-            width: 42%;
+            width: 38%;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 20px; /* Aumentado de 15px a 20px */
             align-content: start;
         }
 
@@ -126,8 +127,8 @@
             background: #ffffff;
             border: 1px solid #e1e5eb;
             border-left: 5px solid #002A5C;
-            padding: 15px;
-            border-radius: 6px;
+            padding: 20px; /* Aumentado de 15px a 20px */
+            border-radius: 8px; /* Aumentado de 6px a 8px */
             box-shadow: 0 4px 6px rgba(0,0,0,0.04);
         }
 
@@ -135,11 +136,12 @@
         .caja-dato.destacado { background: #f0f7ff; border-left-color: #007bff; }
         .caja-dato.alerta { background: #fdf3f3; border-left-color: #dc3545; }
 
-        .label { font-size: 11px; color: #6c757d; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 5px; }
-        .valor { font-size: 20px; color: #002A5C; font-weight: 900; }
+        /* Tamaños de fuente aumentados para los recuadros */
+        .label { font-size: 13px; color: #6c757d; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 8px; }
+        .valor { font-size: 24px; color: #002A5C; font-weight: 900; }
 
         .col-visual {
-            width: 58%;
+            width: 62%;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -275,11 +277,13 @@
             <div class="col-datos">
                 <div class="caja-dato full-width destacado">
                     <span class="label">Agua Caída Últimas 24 Horas</span>
-                    <span class="valor" id="val-24h" style="font-size: 32px; color: #007bff;">0,0 mm</span>
+                    <!-- Aumentado a 40px -->
+                    <span class="valor" id="val-24h" style="font-size: 40px; color: #007bff;">0,0 mm</span>
                 </div>
                 <div class="caja-dato full-width">
                     <span class="label">Último Evento de Precipitación</span>
-                    <span class="valor" id="val-ultagua" style="font-size: 16px; color: #6c757d;">0,0 mm</span>
+                    <!-- Aumentado a 18px -->
+                    <span class="valor" id="val-ultagua" style="font-size: 18px; color: #6c757d;">0,0 mm</span>
                 </div>
                 <div class="caja-dato">
                     <span class="label">Total a la Fecha</span>
@@ -300,7 +304,8 @@
                 </div>
                 <div class="caja-dato full-width alerta" id="caja-estado">
                     <span class="label">Estado Anual: (+) Superávit / (-) Déficit</span>
-                    <span class="valor" id="val-deficit" style="font-size: 24px; color: #dc3545;">0,00 mm (0,00%)</span>
+                    <!-- Aumentado a 28px -->
+                    <span class="valor" id="val-deficit" style="font-size: 28px; color: #dc3545;">0,00 mm (0,00%)</span>
                 </div>
             </div>
 
@@ -371,7 +376,6 @@
             if (window.diasActuales && window.diasActuales.length > 0) {
                 actualizarVistaInforme();
             } else {
-                // Si no hay datos, mostramos el número OMM y la hora actual
                 let ahora = new Date();
                 let horas = pad(ahora.getHours());
                 let minutos = pad(ahora.getMinutes());
@@ -402,7 +406,7 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    layout: { padding: { top: 15, left: 0, right: 10, bottom: 0 } }, 
+                    layout: { padding: { top: 25, left: 0, right: 10, bottom: 0 } }, 
                     plugins: { 
                         legend: { 
                             position: 'top', 
@@ -582,7 +586,6 @@
             let anioSig = fechaSeleccionada.getFullYear();
             let nombreDiaStr = diasSemana[fechaSeleccionada.getDay()];
 
-            // Capturamos la hora actual de visualización/uso
             let ahora = new Date();
             let horas = pad(ahora.getHours());
             let minutos = pad(ahora.getMinutes());
@@ -745,7 +748,6 @@
         };
 
         function descargarImagen() {
-            // Asegurar que la hora es exacta en el momento de descargar
             let ahora = new Date();
             let horas = pad(ahora.getHours());
             let minutos = pad(ahora.getMinutes());
