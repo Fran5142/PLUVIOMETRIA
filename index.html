@@ -67,7 +67,7 @@
            ========================================= */
         #reporte-imagen {
             width: 1250px;
-            height: 920px; /* AUMENTADO PARA QUE EL FOOTER NO QUEDE OCULTO */
+            height: 920px; 
             background-color: #ffffff;
             position: relative;
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
@@ -85,7 +85,7 @@
             align-items: center;
             border-bottom: 6px solid #D4AF37; 
             position: relative; 
-            flex-shrink: 0; /* EVITA QUE SE COMPRIMA */
+            flex-shrink: 0; 
         }
 
         .header-info h1 { margin: 0 0 5px 0; font-size: 42px; font-weight: 900; letter-spacing: 1px; color: #ffffff; text-transform: uppercase; }
@@ -136,7 +136,7 @@
         .caja-dato.destacado { background: #f0f7ff; border-left-color: #007bff; }
         .caja-dato.alerta { background: #fdf3f3; border-left-color: #dc3545; }
 
-        .label { font-size: 13px; color: #6c757d; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 8px; }
+        .label { font-size: 13px; color: #6c757d; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 8px; line-height: 1.3; }
         .valor { font-size: 24px; color: #002A5C; font-weight: 900; }
 
         .col-visual {
@@ -202,10 +202,9 @@
             justify-content: space-between;
             align-items: center;
             border-top: 2px solid #e1e5eb;
-            flex-shrink: 0; /* EVITA QUE EL FOOTER SE ESCONDA */
+            flex-shrink: 0; 
         }
 
-        /* Tamaños y contraste ajustados para mayor claridad */
         .f-texto { color: #002A5C; font-size: 18px; font-weight: 900; }
         .f-contacto { color: #343a40; font-size: 16px; font-weight: bold; margin-top: 5px; }
         
@@ -296,9 +295,9 @@
                     <span class="label">Año normal a la Fecha</span>
                     <span class="valor" id="val-promedio">0,00 mm</span>
                 </div>
-                <!-- CAJA DINÁMICA DEL AÑO PROMEDIO / NORMAL -->
+                <!-- CAJA DINÁMICA DEL AÑO PROMEDIO / NORMAL CON SALTO DE LÍNEA -->
                 <div class="caja-dato">
-                    <span class="label" id="lbl-normal-anual">AÑO NORMAL (AÑOS)</span>
+                    <span class="label" id="lbl-normal-anual">AÑO NORMAL<br>(AÑOS)</span>
                     <span class="valor" id="val-normal-anual">0,00 mm</span>
                 </div>
                 <div class="caja-dato full-width alerta" id="caja-estado">
@@ -725,7 +724,9 @@
                 labelNormalExcel = "AÑO NORMAL (1991-2020)";
             }
 
-            document.getElementById('lbl-normal-anual').innerText = labelNormalExcel;
+            // MODIFICACIÓN: Reemplazar el espacio antes del paréntesis por un salto de línea (<br>)
+            labelNormalExcel = labelNormalExcel.replace(/\s+\(/, "<br>(");
+            document.getElementById('lbl-normal-anual').innerHTML = labelNormalExcel;
             
             if (valorNormalExcel !== "") {
                 document.getElementById('val-normal-anual').innerText = valorNormalExcel;
