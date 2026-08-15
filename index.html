@@ -278,7 +278,7 @@
                     <span class="valor" id="val-24h" style="font-size: 32px; color: #007bff;">0,0 mm</span>
                 </div>
                 <div class="caja-dato full-width">
-                    <span class="label">Último Evento de Precipitación Registrado</span>
+                    <span class="label">Último Evento de Precipitación</span>
                     <span class="valor" id="val-ultagua" style="font-size: 16px; color: #6c757d;">0,0 mm</span>
                 </div>
                 <div class="caja-dato">
@@ -313,7 +313,7 @@
                 </div>
 
                 <div class="caja-grafico">
-                    <span class="titulo-grafico">Análisis Comparativo Mensual</span>
+                    <span class="titulo-grafico">Análisis Comparativo</span>
                     <div style="position: relative; height: 100%; width: 100%;">
                         <canvas id="graficoPluviometrico"></canvas>
                     </div>
@@ -371,7 +371,11 @@
             if (window.diasActuales && window.diasActuales.length > 0) {
                 actualizarVistaInforme();
             } else {
-                document.getElementById('txt-subtitulo').innerText = `OMM Nº ${ommNum}`;
+                // Si no hay datos, mostramos el número OMM y la hora actual
+                let ahora = new Date();
+                let horas = pad(ahora.getHours());
+                let minutos = pad(ahora.getMinutes());
+                document.getElementById('txt-subtitulo').innerText = `OMM Nº ${ommNum} - ACTUALIZADO ${horas}:${minutos} HORAS`;
             }
         }
 
@@ -392,8 +396,8 @@
                 data: {
                     labels: mesesAbreviados,
                     datasets: [
-                        { label: 'MEDIA MENSUAL', data: media, backgroundColor: gradMedia, borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85 },
-                        { label: 'ACUMULADO', data: acumulado, backgroundColor: gradAcum, borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85 }
+                        { label: 'NORMAL MENSUAL', data: media, backgroundColor: gradMedia, borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85 },
+                        { label: 'TOTAL A LA FECHA', data: acumulado, backgroundColor: gradAcum, borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85 }
                     ]
                 },
                 options: {
@@ -578,7 +582,12 @@
             let anioSig = fechaSeleccionada.getFullYear();
             let nombreDiaStr = diasSemana[fechaSeleccionada.getDay()];
 
-            document.getElementById('txt-subtitulo').innerText = `OMM Nº ${ommNum}  |  ${nombreDiaStr} ${diaSig} DE ${mesSig} ${anioSig}`;
+            // Capturamos la hora actual de visualización/uso
+            let ahora = new Date();
+            let horas = pad(ahora.getHours());
+            let minutos = pad(ahora.getMinutes());
+
+            document.getElementById('txt-subtitulo').innerText = `OMM Nº ${ommNum}  |  ${nombreDiaStr} ${diaSig} DE ${mesSig} ${anioSig} - ACTUALIZADO ${horas}:${minutos} HORAS`;
 
             document.getElementById('val-24h').innerText = aguaCaida.toFixed(1).replace(".", ",") + " mm";
             document.getElementById('val-total').innerText = totalFecha.toFixed(2).replace(".", ",") + " mm";
@@ -652,8 +661,6 @@
                         });
                     }
 
-                    // ====== MODIFICACIÓN: EXTRACCIÓN DINÁMICA DE LA MEDIA MENSUAL ======
-                    // Extraemos el "Indice Mensual" directamente desde las filas de la hoja actual
                     if (indiceMesActual !== -1) {
                         fila.forEach(celda => {
                             if (celda) {
@@ -669,7 +676,6 @@
                             }
                         });
                     }
-                    // ====================================================================
                     
                     if (indiceMesActual !== -1 && typeof fila[0] === 'number' && fila[0] >= 1 && fila[0] <= 31) {
                         let lluviaDelDia = Number(fila[1]) || 0;
@@ -739,6 +745,18 @@
         };
 
         function descargarImagen() {
+            // Asegurar que la hora es exacta en el momento de descargar
+            let ahora = new Date();
+            let horas = pad(ahora.getHours());
+            let minutos = pad(ahora.getMinutes());
+            let sub = document.getElementById('txt-subtitulo');
+            
+            if(sub.innerText.includes('- ACTUALIZADO')){
+                sub.innerText = sub.innerText.replace(/- ACTUALIZADO.*$/, `- ACTUALIZADO ${horas}:${minutos} HORAS`);
+            } else {
+                sub.innerText += ` - ACTUALIZADO ${horas}:${minutos} HORAS`;
+            }
+
             const selectEstacion = document.getElementById('select-estacion');
             const fileNameBase = selectEstacion.options[selectEstacion.selectedIndex].getAttribute('data-file-name');
             const nombreArchivoFinal = `${fileNameBase}.jpg`;
